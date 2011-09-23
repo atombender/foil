@@ -55,7 +55,11 @@ module Foil
     end
 
     def to_s
-      @components.join('/')
+      if @components.length == 1 and @components[0] == ''
+        '/'
+      else
+        @components.join('/')
+      end
     end
 
     def length
@@ -74,8 +78,18 @@ module Foil
       Path.new(components | Path.new(other).components, @base)
     end
 
-    def prefix?(other)
+    def has_prefix?(other)
       components[0, other.length] == other.components[0, other.length]
+    end
+
+    def without_prefix(other)
+      if has_prefix?(other)
+        Path.new(components[other.length..-1], other)
+      end
+    end
+
+    def immediate_child?(other)
+      other.has_prefix?(self) && other.components.length == components.length + 1
     end
 
     def parent
@@ -92,7 +106,7 @@ module Foil
     end
 
     def inspect
-      "<Path #{components.inspect} (base=#{@base.inspect})>"
+      "<Path #{components.inspect} (base=#{@base.to_s})>"
     end
 
     attr_reader :base

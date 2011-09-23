@@ -12,7 +12,7 @@ module Foil
       def get(path, context)
         path = Path.new(path)
         actual_path = @root.join(path)
-        if actual_path.prefix?(@root)
+        if actual_path.has_prefix?(@root)
           return LocalNode.new(self, path)
         end
       end
@@ -20,6 +20,7 @@ module Foil
       attr_reader :root
 
       class LocalNode
+        
         def initialize(adapter, path)
           @adapter = adapter
           @path = path
@@ -82,7 +83,7 @@ module Foil
         def rename!(new_path)
           new_local = @local_path.parent.join(new_path)
           if new_local != @local_path
-            raise ArgumentError unless new_local.prefix?(@adapter.root)
+            raise ArgumentError unless new_local.has_prefix?(@adapter.root)
             File.rename(@local_path.to_s, new_local.to_s)
             @local_path = new_local
           end
@@ -105,10 +106,13 @@ module Foil
         end
 
         def create_directory!
-          Dir.mkdir(@local_path.to_s)
+          unless directory?
+            Dir.mkdir(@local_path.to_s)
+          end
         end
 
         def save!
+          # Nothing to do here
         end
 
         attr_reader :path

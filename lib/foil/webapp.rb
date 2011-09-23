@@ -11,7 +11,9 @@ module Foil
 
     before do
       headers['Server'] = "foil/#{VERSION}"
-     
+      
+      headers['MS-Author-Via'] = 'Dav'  # MS-Office compatibility
+
       @repository = Application.get.configuration.repositories.select { |repo| 
         repo.match_domain?(request.host) }.first
       halt 404 unless @repository
@@ -99,7 +101,7 @@ module Foil
 
     route 'MKCOL', '*' do |path|
       node = @repository.get(path, @context) or halt 404
-      halt 405 if node.file? or node.directory?
+      halt 405 if node.file?
       halt 415 unless request.body.read.blank?
       node.create_directory!
       200
@@ -245,7 +247,7 @@ module Foil
 
     error do
       exception = env['sinatra.error']
-      [500, exception.name]
+      [500, exception.message]
     end
 
     error Errno::EACCES do 403 end

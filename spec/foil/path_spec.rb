@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 require 'spec_helper'
 
 describe Foil::Path do
@@ -8,6 +6,11 @@ describe Foil::Path do
     Foil::Path.new("/foo").length.should == 2
     Foil::Path.new("/foo/bar").length.should == 3
     Foil::Path.new("/foo/bar/baz").length.should == 4
+  end
+
+  it 'can point to the root' do
+    Foil::Path.new("/").length.should == 1
+    Foil::Path.new("/").to_s.should == '/'
   end
 
   it 'ignores slash at end' do

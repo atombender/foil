@@ -21,7 +21,7 @@ module Foil
       path = Path.new(path)
       if path.root?
         @mounts.each do |mount_path, mount|
-          if path == mount_path or path.prefix?(mount_path)
+          if path == mount_path or path.has_prefix?(mount_path)
             return mount.get(path.descend, context)
           end
         end

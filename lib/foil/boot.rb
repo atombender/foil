@@ -11,6 +11,7 @@ require 'yaml'
 require 'securerandom'
 require 'active_support'
 require 'active_support/core_ext'
+require 'stringio'
 
 require 'foil/application'
 require 'foil/webapp'
