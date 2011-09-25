@@ -53,7 +53,18 @@ Foil routes WebDAV access into a simply layered system of repositories, mounts a
 
 * Repositories are like virtual hosts: they are associated with a domain or some other pattern that lets Foil know which repository to use based on an incoming requests.
 * Mounts simply maps one URI space to an adapter.
-* Adapters handle the actual resources. A filesystem adapter is provided, but it's simply to write new ones that work with non-file objects.
+* Adapters handle the actual resources. A filesystem adapter is provided, but it's simple to write new ones that work with non-file objects.
+
+Regexp groups from the repository rules can be used later. Here is a repository that maps to a root inferred from the URL:
+
+    repositories:
+      myserver:
+        domain: ^(?<domain>[^\.]+)\.example\.com
+        mounts:
+          /:
+            type: local
+            local:
+              root: /var/www/example/{{domain}}
 
 License
 -------
