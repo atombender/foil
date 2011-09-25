@@ -11,13 +11,14 @@ module Foil
 
     def configure!(config)
       @configuration.load(config)
-    end
-
-    def run!
-      Foil::Webapp.run!(
-        :host => @configuration.host,
-        :port => @configuration.port,
-        :handler => @configuration.handler)
+      log_file = File.open(@configuration.log_path, File::WRONLY | File::APPEND)
+      log_file.sync = true
+      @logger = Logger.new(log_file)
+      class << @logger
+        def format_message(severity, timestamp, progname, msg)
+          "[#{timestamp}] #{msg}\n"
+        end
+      end
     end
     
     class << self
@@ -27,6 +28,7 @@ module Foil
     end
     
     attr_reader :configuration
+    attr_reader :logger
     
   end
   

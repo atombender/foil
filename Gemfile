@@ -9,8 +9,11 @@ gem 's3', '~> 0.3.8'
 gem 'builder', '~> 2.1.2'
 gem 'nokogiri', '~> 1.5.0'
 
-group :development do
+group :standalone do
   gem 'thin'
+end
+
+group :development do
 end
 
 group :test do

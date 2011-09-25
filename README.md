@@ -1,28 +1,28 @@
 Foil
 ====
 
-Foil is a fast, simple WebDAV proxy written in Ruby. Foil can adapt other structures (file systems, remote HTTP servers, database models, etc.) into WebDAV resources.
+Foil is a fast, simple WebDAV proxy written in Ruby, and based on the Rack interface. Foil can adapt any kind of structure (file systems, remote HTTP servers, database models, etc.) into WebDAV resources.
 
 Requirements
 ------------
 
 * Ruby >= 1.9.2
+* Thin (for running standalone)
 
 Running
 -------
 
-* Create a configuration file. The configuration uses the YAML format:
+Create a configuration file. The configuration uses the YAML format:
 
     host: 0.0.0.0
     port: 3000
-    handler: thin
     pid_path: /var/run/foil.pid
     log_path: /var/run/foil.log
     repositories:
       myserver:
         domain: example\.com
         authentication_url: https://example.com/auth
-        authentication_url: https://example.com/notify
+        notification_url: https://example.com/notify
         mounts:
           /:
             type: local
@@ -38,9 +38,22 @@ Running
               aws_access_key_id: mykey
               aws_secret_access_key: mysecret
 
-* Then start the server with:
+To run a standalone server:
 
     sudo bin/foil -c config.yml start
+
+Otherwise, simply mount `Foil::Handler` in your Rack application and configure it:
+
+    Foil::Application.new.configure!({:repositories => ...})
+
+Configuration
+-------------
+
+Foil routes WebDAV access into a simply layered system of repositories, mounts and adapters:
+
+* Repositories are like virtual hosts: they are associated with a domain or some other pattern that lets Foil know which repository to use based on an incoming requests.
+* Mounts simply maps one URI space to an adapter.
+* Adapters handle the actual resources. A filesystem adapter is provided, but it's simply to write new ones that work with non-file objects.
 
 License
 -------

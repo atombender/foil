@@ -102,11 +102,6 @@ module Foil
         return
       end
       @logger = nil
-      class << logger
-        def format_message(severity, timestamp, progname, msg)
-          "[#{timestamp}] #{msg}\n"
-        end
-      end
       logger.info("Starting")
       begin
         Process.setsid
@@ -251,7 +246,7 @@ module Foil
   
     # Returns logger.
     def logger
-      return @logger ||= Logger.new(@log_file || "/dev/null")
+      return @logger ||= (Logger === @log_file ? @log_file : Logger.new(@log_file || "/dev/null"))
     end
   
     attr_reader :root

@@ -29,8 +29,14 @@ module Foil
       nil
     end
 
-    def match_domain?(host)
-      return host =~ @domain
+    def match_domain?(host, context)
+      if host =~ @domain
+        match = $~
+        match.names.each do |name|
+          context.variables[name] = match[name]
+        end
+        true
+      end
     end
 
     attr_reader :name

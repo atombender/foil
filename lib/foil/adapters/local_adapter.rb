@@ -5,15 +5,20 @@ module Foil
       
       def initialize(config)
         config = config.with_indifferent_access.symbolize_keys
-        config.assert_valid_keys(:root)
+        config.assert_valid_keys(:root, :autocreate_root)
         @root = Path.new(config[:root])
+        @autocreate_root = config[:autocreate_root]
       end
 
       def get(path, context)
+        root = Path.new(context.expand_variables(@root.to_s))
+        if @autocreate_root
+          FileUtils.mkdir_p(root.to_s)
+        end
         path = Path.new(path)
-        actual_path = @root.join(path)
-        if actual_path.has_prefix?(@root)
-          return LocalNode.new(self, path)
+        actual_path = root.join(path)
+        if actual_path.has_prefix?(root)
+          return LocalNode.new(root, path)
         end
       end
 
@@ -21,10 +26,10 @@ module Foil
 
       class LocalNode
         
-        def initialize(adapter, path)
-          @adapter = adapter
+        def initialize(root, path)
+          @root = root
           @path = path
-          @local_path = @adapter.root.join(@path)
+          @local_path = @root.join(@path)
         end
 
         def children
@@ -38,7 +43,7 @@ module Foil
               begin
                 dir.each do |file_name|
                   if accept_file?(file_name)
-                    result << LocalNode.new(@adapter, @path.join(file_name))
+                    result << LocalNode.new(@root, @path.join(file_name))
                   end
                 end
               ensure
@@ -83,14 +88,17 @@ module Foil
         def rename!(new_path)
           new_local = @local_path.parent.join(new_path)
           if new_local != @local_path
-            raise ArgumentError unless new_local.has_prefix?(@adapter.root)
+            raise ArgumentError unless new_local.has_prefix?(@root)
+            puts "rename: from: #{@local_path.to_s}"
+            puts "          to: #{new_local.to_s}"
+            puts "      exist?: #{File.exist?(@local_path.to_s)}"
             File.rename(@local_path.to_s, new_local.to_s)
             @local_path = new_local
           end
         end
 
         def to_file(mode = 'r')
-          if mode =~ /w/
+          if mode =~ /[wa]/
             FileUtils.mkdir_p(@local_path.parent.to_s)
           end
           @stat = nil
@@ -98,10 +106,12 @@ module Foil
         end
 
         def delete!
-          if directory?
-            Dir.rmdir(@local_path.to_s)
-          else
-            File.unlink(@local_path.to_s)
+          if exists?
+            if directory?
+              Dir.rmdir(@local_path.to_s)
+            else
+              File.unlink(@local_path.to_s)
+            end
           end
         end
 

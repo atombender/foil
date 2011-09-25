@@ -8,8 +8,10 @@ begin
 rescue LoadError
   # Ignore this
 else
-  Bundler.setup
+  Bundler.setup(:standalone)
 end
+
+require 'thin'
 
 $:.unshift(File.join(File.dirname(__FILE__), "/../lib"))
 require 'foil/boot'
@@ -38,8 +40,8 @@ app.configure!(YAML.load(File.read(config_file)))
 controller = Foil::Daemon.new(
   :root => File.join(File.dirname(__FILE__), "/.."),
   :pid_file => app.configuration.pid_path || "/var/run/foil.pid",
-  :log_file => app.configuration.log_path || "/var/log/foil.log")
+  :log_file => app.logger)
 controller.on_spawn do
-  app.run!
+  Thin::Server.start(app.configuration.host, app.configuration.port, Foil::Handler.new)
 end
 controller.control(ARGV)
