@@ -252,9 +252,6 @@ module Foil
         new_path = URI.decode(URI.parse(destination_url).path)
         new_path = Path.new(new_path)
 
-        puts "move: #{path.to_s}"
-        puts "  to: #{new_path.to_s}"
-
         target = @repository.get(new_path, @context)
         halt 405 if target and target.directory? != node.directory?
 

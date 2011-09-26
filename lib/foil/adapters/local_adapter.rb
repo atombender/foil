@@ -89,9 +89,6 @@ module Foil
           new_local = @local_path.parent.join(new_path)
           if new_local != @local_path
             raise ArgumentError unless new_local.has_prefix?(@root)
-            puts "rename: from: #{@local_path.to_s}"
-            puts "          to: #{new_local.to_s}"
-            puts "      exist?: #{File.exist?(@local_path.to_s)}"
             File.rename(@local_path.to_s, new_local.to_s)
             @local_path = new_local
             @path = new_path
