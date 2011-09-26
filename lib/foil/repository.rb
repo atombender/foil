@@ -9,6 +9,7 @@ module Foil
       @domain = config[:domain].is_a?(Regexp) ? config[:domain] : Regexp.new(config[:domain])
       @authentication_url = config[:authentication_url]
       @notification_url = config[:notification_url]
+      @notifier = Notifier.new(@notification_url)
       @mounts = {}
       config[:mounts].each do |path, mount_config|
         path = Path.new(path)
@@ -27,6 +28,10 @@ module Foil
         end
       end
       nil
+    end
+
+    def notify(action, path, secondary_path = nil)
+      @notifier.notify(action, path, secondary_path)
     end
 
     def match_domain?(host, context)

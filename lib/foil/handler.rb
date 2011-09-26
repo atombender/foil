@@ -39,10 +39,10 @@ module Foil
           end
           halt 404 unless @repository
 
-          begin
-            send("handle_#{env['REQUEST_METHOD'].downcase.underscore}", 
-              Rack::Utils.unescape(env['REQUEST_URI']))
-          rescue NoMethodError => e
+          method_name = "handle_#{env['REQUEST_METHOD'].downcase.underscore}"
+          if respond_to?(method_name)
+            send(method_name, Rack::Utils.unescape(env['REQUEST_URI']))
+          else
             @response.status = 404
           end
         rescue Halt => e
@@ -74,10 +74,11 @@ module Foil
       end
 
       def handle_put(path)
-        halt 400 unless request.body
-        node = @repository.get(path, @context) or halt 404
+        node = @repository.get(path, @context)
+        halt 404 unless node
         halt 405 if node.directory?
 
+        overwriting = node.exists?
         file = node.to_file('w')
         begin
           request.body.each do |part|
@@ -90,7 +91,9 @@ module Foil
         node.content_type ||= request.env['CONTENT_TYPE']
         node.content_type ||= Rack::Mime.mime_type(path.gsub(/^.*(\.\w+)/, '\1'))
         node.save!
+
         @response.status = 201
+        @repository.notify(overwriting ? :modify : :create, node.path)
       end
 
       def handle_propfind(path)
@@ -141,9 +144,11 @@ module Foil
         if node.directory?
           traverse(node, :infinity) do |node|
             node.delete!
+            @repository.notify(:delete, node.path)
           end
         else
           node.delete!
+          @repository.notify(:delete, node.path)
         end
         @response.status = 204
       end
@@ -235,6 +240,7 @@ module Foil
         halt 405 if node.file?
         halt 415 unless request.body.read.blank?
         node.create_directory!
+        @repository.notify(:make_collection, node.path)
       end
 
       def handle_move(path)
@@ -255,6 +261,7 @@ module Foil
         target_parent = @repository.get(new_path.parent, @context)
         halt 404 if node.file? and not target_parent.exists?
 
+        old_path = node.path
         if node.file?
           target.delete! if target and target.file?
           node.rename!(new_path)
@@ -264,6 +271,8 @@ module Foil
           headers['Location'] = new_path.to_s  # TODO: URL
           response.status = 201
         end
+
+        @repository.notify(:rename, old_path, node.path)
       end
 
     private

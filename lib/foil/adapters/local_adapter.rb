@@ -94,6 +94,7 @@ module Foil
             puts "      exist?: #{File.exist?(@local_path.to_s)}"
             File.rename(@local_path.to_s, new_local.to_s)
             @local_path = new_local
+            @path = new_path
           end
         end
 
