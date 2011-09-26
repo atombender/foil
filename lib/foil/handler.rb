@@ -31,6 +31,7 @@ module Foil
           @context = Context.new(@request, @response)
           @context.variables['host'] = @request.host
           @context.variables['remote_addr'] = @request.env['REMOTE_ADDR']
+
           Application.get.configuration.repositories.each do |repo|
             if repo.match_domain?(@request.host, @context)
               @repository = repo
@@ -40,8 +41,11 @@ module Foil
           halt 404 unless @repository
 
           method_name = "handle_#{env['REQUEST_METHOD'].downcase.underscore}"
+          path = Rack::Utils.unescape(env['REQUEST_URI'])
           if respond_to?(method_name)
-            send(method_name, Rack::Utils.unescape(env['REQUEST_URI']))
+            @repository.with_authentication(@context) do
+              send(method_name, path)
+            end
           else
             @response.status = 404
           end
@@ -49,7 +53,7 @@ module Foil
           @response.status = e.status
         end
       rescue Exception => e
-        logger.error("Exception #{e.class}: #{e.message}")
+        logger.error("Exception #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}")
         @response.status = 500
       end
 
@@ -93,7 +97,7 @@ module Foil
         node.save!
 
         @response.status = 201
-        @repository.notify(overwriting ? :modify : :create, node.path)
+        @repository.notify(overwriting ? :modify : :create, node.path.absolute)
       end
 
       def handle_propfind(path)
@@ -144,11 +148,11 @@ module Foil
         if node.directory?
           traverse(node, :infinity) do |node|
             node.delete!
-            @repository.notify(:delete, node.path)
+            @repository.notify(:delete, node.path.absolute)
           end
         else
           node.delete!
-          @repository.notify(:delete, node.path)
+          @repository.notify(:delete, node.path.absolute)
         end
         @response.status = 204
       end
@@ -240,7 +244,7 @@ module Foil
         halt 405 if node.file?
         halt 415 unless request.body.read.blank?
         node.create_directory!
-        @repository.notify(:make_collection, node.path)
+        @repository.notify(:make_collection, node.path.absolute)
       end
 
       def handle_move(path)
@@ -269,7 +273,7 @@ module Foil
           response.status = 201
         end
 
-        @repository.notify(:rename, old_path, node.path)
+        @repository.notify(:rename, old_path.absolute, node.path.absolute)
       end
 
     private
