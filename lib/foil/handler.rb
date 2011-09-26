@@ -28,7 +28,9 @@ module Foil
 
           @response['MS-Author-Via'] = 'Dav'  # MS-Office compatibility
 
-          @context = Context.new(@request, @response)        
+          @context = Context.new(@request, @response)
+          @context.variables['host'] = @request.host
+          @context.variables['remote_addr'] = @request.env['REMOTE_ADDR']
           Application.get.configuration.repositories.each do |repo|
             if repo.match_domain?(@request.host, @context)
               @repository = repo

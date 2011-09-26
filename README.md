@@ -65,6 +65,12 @@ Regexp groups from the repository rules can be used later. Here is a repository 
             type: local
             local:
               root: /var/www/example/{{domain}}
+              autocreate_root: true
+
+Some variables are predefined:
+
+* `host`: The full hostname.
+* `remote_addr`: The IP address of the connection.
 
 License
 -------
