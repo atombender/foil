@@ -17,8 +17,8 @@ GEM
     multipart-post (1.1.3)
     nokogiri (1.5.0)
     proxies (0.2.1)
-    rack (1.3.3)
-    rack-protection (1.1.0)
+    rack (1.3.4)
+    rack-protection (1.1.4)
       rack
     rspec (2.6.0)
       rspec-core (~> 2.6.0)
